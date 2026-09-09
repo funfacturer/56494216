@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interaktiver Event-Kalender</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-main: #2d3748;
+      --text-muted: #718096;
+      --border-color: #e2e8f0;
+      --primary: #3182ce;
+      --danger: #e53e3e;
+
+      /* Kategorie-Farben */
+      --cat-fussball: #38a169;
+      --cat-schule: #dd6b20;
+      --cat-arbeit: #3182ce;
+      --cat-privat: #805ad5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 24px;
+    }
+
+    .calendar-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    /* Header & Navigation */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .calendar-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn:hover {
+      background: #edf2f7;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: #2b6cb0;
+    }
+
+    /* Filterbereich */
+    .filter-section {
+      padding: 16px 24px;
+      background: #fafafa;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .filter-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .category-filter {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      border: 2px solid transparent;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .category-filter input {
+      display: none;
+    }
+
+    .category-filter.cat-fussball { background: #e6fffa; color: var(--cat-fussball); border-color: var(--cat-fussball); }
+    .category-filter.cat-schule { background: #feebc8; color: var(--cat-schule); border-color: var(--cat-schule); }
+    .category-filter.cat-arbeit { background: #ebf8ff; color: var(--cat-arbeit); border-color: var(--cat-arbeit); }
+    .category-filter.cat-privat { background: #faf5ff; color: var(--cat-privat); border-color: var(--cat-privat); }
+
+    .category-filter.inactive {
+      opacity: 0.35;
+      background: #edf2f7;
+      color: var(--text-muted);
+      border-color: transparent;
+    }
+
+    /* Kalender Grid */
+    .weekdays-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #f7fafc;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding: 10px 0;
+    }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-auto-rows: minmax(110px, 1fr);
+    }
+
+    .day-cell {
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 8px;
+      position: relative;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .day-cell:nth-child(7n) {
+      border-right: none;
+    }
+
+    .day-cell.other-month {
+      background: #fcfcfc;
+      color: #cbd5e0;
+    }
+
+    .day-number {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .day-cell.today .day-number {
+      background: var(--primary);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Event Badges */
+    .event-badge {
+      font-size: 0.75rem;
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: filter 0.15s, transform 0.1s;
+    }
+
+    .event-badge:hover {
+      filter: brightness(0.9);
+      transform: scale(0.98);
+    }
+
+    .event-badge.cat-fussball { background-color: var(--cat-fussball); }
+    .event-badge.cat-schule { background-color: var(--cat-schule); }
+    .event-badge.cat-arbeit { background-color: var(--cat-arbeit); }
+    .event-badge.cat-privat { background-color: var(--cat-privat); }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s;
+      z-index: 100;
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 450px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h3 {
+      font-size: 1.25rem;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calendar-container">
+    <!-- Header -->
+    <div class="calendar-header">
+      <div>
+        <h2 id="currentMonthYear">Monat Jahr</h2>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn" id="btnPrev">&lt; Zurück</button>
+        <button class="btn" id="btnToday">Heute</button>
+        <button class="btn" id="btnNext">Weiter &gt;</button>
+        <button class="btn btn-primary" id="btnOpenCreateModal">+ Neuer Termin</button>
+      </div>
+    </div>
+
+    <!-- Multi-Kategorie-Filter -->
+    <div class="filter-section">
+      <span class="filter-label">Kategorien filtern:</span>
+      <label class="category-filter cat-fussball" data-cat="fussball">
+        <input type="checkbox" checked value="fussball"> ⚽ Fußball
+      </label>
+      <label class="category-filter cat-schule" data-cat="schule">
+        <input type="checkbox" checked value="schule"> 🏫 Schule
+      </label>
+      <label class="category-filter cat-arbeit" data-cat="arbeit">
+        <input type="checkbox" checked value="arbeit"> 💼 Arbeit
+      </label>
+      <label class="category-filter cat-privat" data-cat="privat">
+        <input type="checkbox" checked value="privat"> 🎉 Freizeit / Privat
+      </label>
+    </div>
+
+    <!-- Wochentage -->
+    <div class="weekdays-grid">
+      <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
+    </div>
+
+    <!-- Kalendertage -->
+    <div class="days-grid" id="calendarDays"></div>
+  </div>
+
+  <!-- Modal: Termin anlegen -->
+  <div class="modal-backdrop" id="createModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Neuen Termin anlegen</h3>
+      </div>
+      <form id="createEventForm">
+        <div class="form-group">
+          <label for="eventTitle">Titel</label>
+          <input type="text" id="eventTitle" required placeholder="z.B. Fußballtraining">
+        </div>
+        <div class="form-group">
+          <label for="eventDate">Datum</label>
+          <input type="date" id="eventDate" required>
+        </div>
+        <div class="form-group">
+          <label for="eventTime">Uhrzeit (optional)</label>
+          <input type="time" id="eventTime">
+        </div>
+        <div class="form-group">
+          <label for="eventCategory">Kategorie</label>
+          <select id="eventCategory" required>
+            <option value="fussball">⚽ Fußball</option>
+            <option value="schule">🏫 Schule</option>
+            <option value="arbeit">💼 Arbeit</option>
+            <option value="privat">🎉 Freizeit / Privat</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="eventNotes">Beschreibung / Notiz</label>
+          <textarea id="eventNotes" rows="2" placeholder="Zusatzinfos..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="btnCancelCreate">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Termin Details & Löschen -->
+  <div class="modal-backdrop" id="detailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="detailTitle">Termindetails</h3>
+      </div>
+      <div style="font-size: 0.95rem; line-height: 1.6;">
+        <p><strong>Datum:</strong> <span id="detailDate"></span></p>
+        <p><strong>Uhrzeit:</strong> <span id="detailTime"></span></p>
+        <p><strong>Kategorie:</strong> <span id="detailCategory"></span></p>
+        <p><strong>Notiz:</strong> <span id="detailNotes"></span></p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="btnDeleteEvent">Löschen</button>
+        <button type="button" class="btn" id="btnCloseDetail">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State-Management
+    let currentDate = new Date();
+    let selectedEventId = null;
+
+    // Standard-Beispieldaten (falls localStorage leer ist)
+    const initialEvents = [
+      { id: '1', title: 'Fußball Match vs. TSV', date: '2026-08-28', time: '18:30', category: 'fussball', notes: 'Heimspiel, Kunstrasen' },
+      { id: '2', title: 'Mathe Klassenarbeit', date: '2026-08-28', time: '08:00', category: 'schule', notes: 'Zimmer 204' },
+      { id: '3', title: 'Team-Meeting', date: '2026-08-30', time: '10:00', category: 'arbeit', notes: 'Sprint Review' }
+    ];
+
+    let events = JSON.parse(localStorage.getItem('my_calendar_events')) || initialEvents;
+
+    const categoryNames = {
+      fussball: '⚽ Fußball',
+      schule: '🏫 Schule',
+      arbeit: '💼 Arbeit',
+      privat: '🎉 Freizeit / Privat'
+    };
+
+    // DOM-Elemente
+    const calendarDays = document.getElementById('calendarDays');
+    const currentMonthYear = document.getElementById('currentMonthYear');
+    const createModal = document.getElementById('createModal');
+    const detailModal = document.getElementById('detailModal');
+    const createEventForm = document.getElementById('createEventForm');
+
+    // Aktive Filter ermitteln
+    function getActiveCategories() {
+      const active = [];
+      document.querySelectorAll('.filter-section input[type="checkbox"]').forEach(cb => {
+        if (cb.checked) active.push(cb.value);
+      });
+      return active;
+    }
+
+    // Kalender rendern
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      // Header-Titel
+      const monthName = currentDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+      currentMonthYear.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+      calendarDays.innerHTML = '';
+
+      // Erster Tag des Monats (0=Sonntag, 1=Montag, ...)
+      const firstDay = new Date(year, month, 1);
+      let startingDay = firstDay.getDay() - 1; // Montag als Index 0
+      if (startingDay === -1) startingDay = 6;
+
+      const lastDay = new Date(year, month + 1, 0);
+      const totalDays = lastDay.getDate();
+
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+      // Tage des Vormonats
+      for (let i = startingDay; i > 0; i--) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'day-cell other-month';
+        dayCell.innerHTML = `<span class="day-number">${prevMonthLastDay - i + 1}</span>`;
+        calendarDays.appendChild(dayCell);
+      }
+
+      const activeCategories = getActiveCategories();
+      const today = new Date();
+
+      // Tage des aktuellen Monats
+      for (let day = 1; day <= totalDays; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'day-cell';
+
+        // Heute markieren
+        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+          dayCell.classList.add('today');
+        }
+
+        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        dayCell.innerHTML = `<span class="day-number">${day}</span>`;
+
+        // Termine für diesen Tag filtern
+        const dayEvents = events.filter(ev => ev.date === dateString && activeCategories.includes(ev.category));
+
+        dayEvents.forEach(ev => {
+          const badge = document.createElement('div');
+          badge.className = `event-badge cat-${ev.category}`;
+          badge.textContent = (ev.time ? ev.time + ' ' : '') + ev.title;
+          badge.title = ev.title;
+          badge.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openDetailModal(ev.id);
+          });
+          dayCell.appendChild(badge);
+        });
+
+        calendarDays.appendChild(dayCell);
+      }
+
+      // Restliche Zellen des Rasters auffüllen (6 Zeilen à 7 Spalten = 42 Zellen)
+      const totalRendered = startingDay + totalDays;
+      const remainingDays = 42 - totalRendered;
+      if (remainingDays < 7) {
+        for (let i = 1; i <= remainingDays; i++) {
+          const dayCell = document.createElement('div');
+          dayCell.className = 'day-cell other-month';
+          dayCell.innerHTML = `<span class="day-number">${i}</span>`;
+          calendarDays.appendChild(dayCell);
+        }
+      }
+    }
+
+    // Modal Funktionen
+    function openDetailModal(id) {
+      selectedEventId = id;
+      const ev = events.find(e => e.id === id);
+      if (!ev) return;
+
+      document.getElementById('detailTitle').textContent = ev.title;
+      document.getElementById('detailDate').textContent = ev.date;
+      document.getElementById('detailTime').textContent = ev.time || 'Keine Angabe';
+      document.getElementById('detailCategory').textContent = categoryNames[ev.category] || ev.category;
+      document.getElementById('detailNotes').textContent = ev.notes || 'Keine Notiz vorhanden';
+
+      detailModal.classList.add('active');
+    }
+
+    function closeDetailModal() {
+      detailModal.classList.remove('active');
+      selectedEventId = null;
+    }
+
+    // Event Listener für Navigation
+    document.getElementById('btnPrev').addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    document.getElementById('btnNext').addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    document.getElementById('btnToday').addEventListener('click', () => {
+      currentDate = new Date();
+      renderCalendar();
+    });
+
+    // Multi-Filter Toggle Handling
+    document.querySelectorAll('.category-filter').forEach(label => {
+      label.addEventListener('click', (e) => {
+        const checkbox = label.querySelector('input');
+        label.classList.toggle('inactive', !checkbox.checked);
+        renderCalendar();
+      });
+    });
+
+    // Termin anlegen
+    document.getElementById('btnOpenCreateModal').addEventListener('click', () => {
+      createEventForm.reset();
+      document.getElementById('eventDate').value = new Date().toISOString().split('T')[0];
+      createModal.classList.add('active');
+    });
+
+    document.getElementById('btnCancelCreate').addEventListener('click', () => {
+      createModal.classList.remove('active');
+    });
+
+    createEventForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newEvent = {
+        id: Date.now().toString(),
+        title: document.getElementById('eventTitle').value.trim(),
+        date: document.getElementById('eventDate').value,
+        time: document.getElementById('eventTime').value,
+        category: document.getElementById('eventCategory').value,
+        notes: document.getElementById('eventNotes').value.trim()
+      };
+
+      events.push(newEvent);
+      localStorage.setItem('my_calendar_events', JSON.stringify(events));
+      createModal.classList.remove('active');
+      renderCalendar();
+    });
+
+    // Termin löschen
+    document.getElementById('btnDeleteEvent').addEventListener('click', () => {
+      if (!selectedEventId) return;
+      events = events.filter(e => e.id !== selectedEventId);
+      localStorage.setItem('my_calendar_events', JSON.stringify(events));
+      closeDetailModal();
+      renderCalendar();
+    });
+
+    document.getElementById('btnCloseDetail').addEventListener('click', closeDetailModal);
+
+    // Initialisierung
+    renderCalendar();
+  </script>
+</body>
+</html>
