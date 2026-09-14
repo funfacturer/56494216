@@ -1,0 +1,409 @@
+:root {
+  --bg-color: #f4f6f9;
+  --card-bg: #ffffff;
+  --text-main: #2d3748;
+  --text-muted: #718096;
+  --border-color: #e2e8f0;
+  --primary: #3182ce;
+  --danger: #e53e3e;
+
+  /* Kategorie-Farben */
+  --cat-fussball: #38a169;
+  --cat-schule: #dd6b20;
+  --cat-arbeit: #3182ce;
+  --cat-privat: #805ad5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  padding: 16px;
+}
+
+.calendar-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Header & Navigation */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calendar-header h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+
+.btn:active, .btn:hover {
+  background: #edf2f7;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.btn-primary:active, .btn-primary:hover {
+  background: #2b6cb0;
+}
+
+/* Filterbereich */
+.filter-section {
+  padding: 12px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  width: 100%;
+}
+
+.category-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  border: 2px solid transparent;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.category-filter input {
+  display: none;
+}
+
+.category-filter.cat-fussball { background: #e6fffa; color: var(--cat-fussball); border-color: var(--cat-fussball); }
+.category-filter.cat-schule { background: #feebc8; color: var(--cat-schule); border-color: var(--cat-schule); }
+.category-filter.cat-arbeit { background: #ebf8ff; color: var(--cat-arbeit); border-color: var(--cat-arbeit); }
+.category-filter.cat-privat { background: #faf5ff; color: var(--cat-privat); border-color: var(--cat-privat); }
+
+.category-filter.inactive {
+  opacity: 0.35;
+  background: #edf2f7;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+/* Kalender Grid */
+.weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f7fafc;
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(100px, 1fr);
+}
+
+.day-cell {
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 6px;
+  position: relative;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.day-cell.other-month {
+  background: #fafafa;
+  color: #cbd5e0;
+}
+
+.day-number {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.day-cell.today .day-number {
+  background: var(--primary);
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-cell.selected-day {
+  background-color: #ebf8ff !important;
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+/* Event-Badges & Punkte */
+.event-badge {
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-dots-container {
+  display: none;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.event-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.bg-cat-fussball, .event-badge.cat-fussball { background-color: var(--cat-fussball); }
+.bg-cat-schule, .event-badge.cat-schule { background-color: var(--cat-schule); }
+.bg-cat-arbeit, .event-badge.cat-arbeit { background-color: var(--cat-arbeit); }
+.bg-cat-privat, .event-badge.cat-privat { background-color: var(--cat-privat); }
+
+/* Mobile Tages-Agenda */
+.day-agenda-section {
+  display: none;
+  padding: 16px 20px;
+  border-top: 2px solid var(--border-color);
+  background: #ffffff;
+}
+
+.day-agenda-header {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agenda-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border-left: 4px solid var(--primary);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.agenda-item.cat-fussball { border-left-color: var(--cat-fussball); }
+.agenda-item.cat-schule { border-left-color: var(--cat-schule); }
+.agenda-item.cat-arbeit { border-left-color: var(--cat-arbeit); }
+.agenda-item.cat-privat { border-left-color: var(--cat-privat); }
+
+.agenda-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Modals */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s;
+  z-index: 100;
+  padding: 16px;
+}
+
+.modal-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 440px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-header h3 {
+  font-size: 1.2rem;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+/* Responsive Ansicht (Smartphones & kleine Tablets) */
+@media (max-width: 768px) {
+  body {
+    padding: 8px;
+  }
+
+  .calendar-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calendar-header h2 {
+    text-align: center;
+  }
+
+  .nav-buttons {
+    justify-content: space-between;
+  }
+
+  .nav-buttons .btn {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px;
+    font-size: 0.8rem;
+  }
+
+  .days-grid {
+    grid-auto-rows: 52px;
+  }
+
+  .day-cell {
+    padding: 4px 2px;
+    align-items: center;
+  }
+
+  .day-number {
+    font-size: 0.75rem;
+  }
+
+  .event-badge {
+    display: none !important;
+  }
+
+  .event-dots-container {
+    display: flex;
+  }
+
+  .day-agenda-section {
+    display: block;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 24px 20px;
+  }
+}
