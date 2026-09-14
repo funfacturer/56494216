@@ -385,10 +385,6 @@ body {
     display: flex;
   }
 
-  .day-agenda-section {
-    display: block;
-  }
-
   .modal-backdrop {
     align-items: flex-end;
     padding: 0;

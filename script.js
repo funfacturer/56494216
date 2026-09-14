@@ -34,22 +34,32 @@ function getActiveCategories() {
   return active;
 }
 
-// Tages-Agenda (Mobile) rendern
+// Tages-Agenda (Mobile) nur anzeigen, wenn Termine vorhanden sind
 function renderAgenda() {
+  const agendaSection = document.getElementById('agendaSection');
   const activeCategories = getActiveCategories();
   const dayEvents = events.filter(ev => ev.date === selectedDateString && activeCategories.includes(ev.category));
 
-  const [y, m, d] = selectedDateString.split('-');
-  const formattedDate = new Date(y, m - 1, d).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
-  agendaDateTitle.textContent = `Termine am ${formattedDate}`;
-
-  agendaList.innerHTML = '';
-
+  // Wenn keine Termine vorhanden sind -> Bereich komplett ausblenden
   if (dayEvents.length === 0) {
-    agendaList.innerHTML = '<div class="agenda-empty">Keine Termine für diesen Tag oder aktive Filterung vorhanden.</div>';
+    agendaSection.style.display = 'none';
+    agendaList.innerHTML = '';
     return;
   }
 
+  // Wenn Termine vorhanden sind -> Einblenden und auflisten
+  agendaSection.style.display = 'block';
+
+  const [y, m, d] = selectedDateString.split('-');
+  const formattedDate = new Date(y, m - 1, d).toLocaleDateString('de-DE', { 
+    weekday: 'short', 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric' 
+  });
+  agendaDateTitle.textContent = `Termine am ${formattedDate}`;
+
+  agendaList.innerHTML = '';
   dayEvents.forEach(ev => {
     const item = document.createElement('div');
     item.className = `agenda-item cat-${ev.category}`;
@@ -66,6 +76,7 @@ function renderAgenda() {
     agendaList.appendChild(item);
   });
 }
+
 
 // Kalender-Monatsraster rendern
 function renderCalendar() {
@@ -220,7 +231,6 @@ document.querySelectorAll('.category-filter').forEach(label => {
 
 // Erstellen & Löschen
 document.getElementById('btnOpenCreateModal').addEventListener('click', () => openCreateModal());
-document.getElementById('btnAgendaAdd').addEventListener('click', () => openCreateModal(selectedDateString));
 document.getElementById('btnCancelCreate').addEventListener('click', () => createModal.classList.remove('active'));
 
 createEventForm.addEventListener('submit', (e) => {
