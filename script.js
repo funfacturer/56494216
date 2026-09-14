@@ -34,11 +34,15 @@ function getActiveCategories() {
   return active;
 }
 
-// Tages-Agenda (Mobile) nur anzeigen, wenn Termine vorhanden sind
+// Tages-Agenda (Mobile) chronologisch sortiert rendern
 function renderAgenda() {
   const agendaSection = document.getElementById('agendaSection');
   const activeCategories = getActiveCategories();
-  const dayEvents = events.filter(ev => ev.date === selectedDateString && activeCategories.includes(ev.category));
+  
+  // 1. Filtern und 2. Chronologisch nach Uhrzeit sortieren
+  const dayEvents = events
+    .filter(ev => ev.date === selectedDateString && activeCategories.includes(ev.category))
+    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
   // Wenn keine Termine vorhanden sind -> Bereich komplett ausblenden
   if (dayEvents.length === 0) {
@@ -77,8 +81,7 @@ function renderAgenda() {
   });
 }
 
-
-// Kalender-Monatsraster rendern
+// Kalender-Monatsraster rendern (ebenfalls sortiert)
 function renderCalendar() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -124,7 +127,10 @@ function renderCalendar() {
 
     dayCell.innerHTML = `<span class="day-number">${day}</span>`;
 
-    const dayEvents = events.filter(ev => ev.date === dateString && activeCategories.includes(ev.category));
+    // Termine filtern und chronologisch sortieren
+    const dayEvents = events
+      .filter(ev => ev.date === dateString && activeCategories.includes(ev.category))
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
     // Desktop: Text-Badges
     dayEvents.forEach(ev => {
@@ -176,6 +182,7 @@ function renderCalendar() {
 
   renderAgenda();
 }
+
 
 // Modal-Logik
 function openDetailModal(id) {
@@ -263,3 +270,32 @@ document.getElementById('btnCloseDetail').addEventListener('click', closeDetailM
 
 // Initialer Aufruf
 renderCalendar();
+
+// Vollbild (Fullscreen API) umschalten
+const btnFullscreen = document.getElementById('btnFullscreen');
+
+btnFullscreen.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    // Vollbild anfordern
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+    } else if (document.documentElement.webkitRequestFullscreen) { /* Safari */
+      document.documentElement.webkitRequestFullscreen();
+    } else if (document.documentElement.msRequestFullscreen) { /* IE/Edge */
+      document.documentElement.msRequestFullscreen();
+    }
+  } else {
+    // Vollbild verlassen
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+});
+
+// Button-Symbol aktualisieren
+document.addEventListener('fullscreenchange', () => {
+  btnFullscreen.textContent = document.fullscreenElement ? '🗗' : '⛶';
+});
+
