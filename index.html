@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Interaktiver Event-Kalender</title>
+  <title>Kalender</title>
   <!-- CSS einbinden -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -23,18 +23,17 @@
 
     <!-- Multi-Kategorie-Filter -->
     <div class="filter-section">
-      <span class="filter-label">Kategorien filtern:</span>
-      <label class="category-filter cat-fussball" data-cat="fussball">
-        <input type="checkbox" checked value="fussball"> ⚽ Fußball
+      <label class="category-filter cat-pferd" data-cat="pferd">
+        <input type="checkbox" checked value="pferd"> 🐎 Pferd
       </label>
-      <label class="category-filter cat-schule" data-cat="schule">
-        <input type="checkbox" checked value="schule"> 🏫 Schule
+      <label class="category-filter cat-tage" data-cat="tage">
+        <input type="checkbox" checked value="tage"> 👸 Tage
+      </label>
+      <label class="category-filter cat-uni" data-cat="uni">
+        <input type="checkbox" checked value="uni"> 🏫 Uni
       </label>
       <label class="category-filter cat-arbeit" data-cat="arbeit">
         <input type="checkbox" checked value="arbeit"> 💼 Arbeit
-      </label>
-      <label class="category-filter cat-privat" data-cat="privat">
-        <input type="checkbox" checked value="privat"> 🎉 Freizeit
       </label>
     </div>
 
@@ -65,7 +64,7 @@
       <form id="createEventForm">
         <div class="form-group">
           <label for="eventTitle">Titel</label>
-          <input type="text" id="eventTitle" required placeholder="z. B. Fußballtraining">
+          <input type="text" id="eventTitle" required placeholder="z. B. Reitstunde oder Vorlesung">
         </div>
         <div class="form-group">
           <label for="eventDate">Datum</label>
@@ -78,10 +77,10 @@
         <div class="form-group">
           <label for="eventCategory">Kategorie</label>
           <select id="eventCategory" required>
-            <option value="fussball">⚽ Fußball</option>
-            <option value="schule">🏫 Schule</option>
+            <option value="pferd">🐎 Pferd</option>
+            <option value="tage">👸 Tage</option>
+            <option value="uni">🏫 Uni</option>
             <option value="arbeit">💼 Arbeit</option>
-            <option value="privat">🎉 Freizeit / Privat</option>
           </select>
         </div>
         <div class="form-group">

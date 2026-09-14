@@ -7,11 +7,11 @@
   --primary: #3182ce;
   --danger: #e53e3e;
 
-  /* Kategorie-Farben */
-  --cat-fussball: #38a169;
-  --cat-schule: #dd6b20;
-  --cat-arbeit: #3182ce;
-  --cat-privat: #805ad5;
+  /* Spezifische Farben für die 4 Kategorien */
+  --cat-pferd: #38a169;   /* Grün */
+  --cat-tage: #d53f8c;    /* Pink / Beere */
+  --cat-uni: #dd6b20;     /* Orange */
+  --cat-arbeit: #3182ce;  /* Blau */
 }
 
 * {
@@ -95,13 +95,6 @@ body {
   gap: 8px;
 }
 
-.filter-label {
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  width: 100%;
-}
-
 .category-filter {
   display: inline-flex;
   align-items: center;
@@ -120,10 +113,10 @@ body {
   display: none;
 }
 
-.category-filter.cat-fussball { background: #e6fffa; color: var(--cat-fussball); border-color: var(--cat-fussball); }
-.category-filter.cat-schule { background: #feebc8; color: var(--cat-schule); border-color: var(--cat-schule); }
+.category-filter.cat-pferd { background: #e6fffa; color: var(--cat-pferd); border-color: var(--cat-pferd); }
+.category-filter.cat-tage { background: #fff5f7; color: var(--cat-tage); border-color: var(--cat-tage); }
+.category-filter.cat-uni { background: #feebc8; color: var(--cat-uni); border-color: var(--cat-uni); }
 .category-filter.cat-arbeit { background: #ebf8ff; color: var(--cat-arbeit); border-color: var(--cat-arbeit); }
-.category-filter.cat-privat { background: #faf5ff; color: var(--cat-privat); border-color: var(--cat-privat); }
 
 .category-filter.inactive {
   opacity: 0.35;
@@ -194,7 +187,7 @@ body {
   outline-offset: -2px;
 }
 
-/* Event-Badges & Punkte */
+/* Event-Badges & Farbpunkte */
 .event-badge {
   font-size: 0.75rem;
   padding: 3px 6px;
@@ -220,10 +213,10 @@ body {
   border-radius: 50%;
 }
 
-.bg-cat-fussball, .event-badge.cat-fussball { background-color: var(--cat-fussball); }
-.bg-cat-schule, .event-badge.cat-schule { background-color: var(--cat-schule); }
+.bg-cat-pferd, .event-badge.cat-pferd { background-color: var(--cat-pferd); }
+.bg-cat-tage, .event-badge.cat-tage { background-color: var(--cat-tage); }
+.bg-cat-uni, .event-badge.cat-uni { background-color: var(--cat-uni); }
 .bg-cat-arbeit, .event-badge.cat-arbeit { background-color: var(--cat-arbeit); }
-.bg-cat-privat, .event-badge.cat-privat { background-color: var(--cat-privat); }
 
 /* Mobile Tages-Agenda */
 .day-agenda-section {
@@ -260,10 +253,10 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.agenda-item.cat-fussball { border-left-color: var(--cat-fussball); }
-.agenda-item.cat-schule { border-left-color: var(--cat-schule); }
+.agenda-item.cat-pferd { border-left-color: var(--cat-pferd); }
+.agenda-item.cat-tage { border-left-color: var(--cat-tage); }
+.agenda-item.cat-uni { border-left-color: var(--cat-uni); }
 .agenda-item.cat-arbeit { border-left-color: var(--cat-arbeit); }
-.agenda-item.cat-privat { border-left-color: var(--cat-privat); }
 
 .agenda-empty {
   color: var(--text-muted);
@@ -345,7 +338,7 @@ body {
   border-color: var(--danger);
 }
 
-/* Responsive Ansicht (Smartphones & kleine Tablets) */
+/* Responsive Ansicht (<= 768px) */
 @media (max-width: 768px) {
   body {
     padding: 8px;

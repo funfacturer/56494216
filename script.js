@@ -3,20 +3,21 @@ let currentDate = new Date();
 let selectedDateString = new Date().toISOString().split('T')[0];
 let selectedEventId = null;
 
-// Standard-Beispieldaten (falls localStorage leer ist)
+// Standard-Beispieldaten mit den neuen Kategorien
 const initialEvents = [
-  { id: '1', title: 'Fußball Match vs. TSV', date: '2026-09-15', time: '18:30', category: 'fussball', notes: 'Heimspiel, Kunstrasen' },
-  { id: '2', title: 'Mathe Klassenarbeit', date: '2026-09-15', time: '08:00', category: 'schule', notes: 'Zimmer 204' },
-  { id: '3', title: 'Team-Meeting', date: '2026-09-18', time: '10:00', category: 'arbeit', notes: 'Sprint Review' }
+  { id: '1', title: 'Reitstunde Halle', date: new Date().toISOString().split('T')[0], time: '17:00', category: 'pferd', notes: 'Sattel mitbringen' },
+  { id: '2', title: 'Mathe-Vorlesung', date: new Date().toISOString().split('T')[0], time: '09:00', category: 'uni', notes: 'Hörsaal 3' },
+  { id: '3', title: 'Schicht Büro', date: new Date().toISOString().split('T')[0], time: '13:00', category: 'arbeit', notes: 'Projektmeeting' }
 ];
 
 let events = JSON.parse(localStorage.getItem('my_calendar_events')) || initialEvents;
 
+// Mapping der Schlüssel zu den Anzeige-Namen
 const categoryNames = {
-  fussball: '⚽ Fußball',
-  schule: '🏫 Schule',
-  arbeit: '💼 Arbeit',
-  privat: '🎉 Freizeit / Privat'
+  pferd: '🐎 Pferd',
+  tage: '👸 Tage',
+  uni: '🏫 Uni',
+  arbeit: '💼 Arbeit'
 };
 
 // DOM-Elemente
@@ -37,7 +38,7 @@ function getActiveCategories() {
   return active;
 }
 
-// Tages-Agenda für Mobile rendern
+// Tages-Agenda (Mobile) rendern
 function renderAgenda() {
   const activeCategories = getActiveCategories();
   const dayEvents = events.filter(ev => ev.date === selectedDateString && activeCategories.includes(ev.category));
@@ -60,7 +61,7 @@ function renderAgenda() {
       <div>
         <strong>${ev.title}</strong>
         <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-          ${ev.time ? '⏰ ' + ev.time + ' · ' : ''}${categoryNames[ev.category]}
+          ${ev.time ? '⏰ ' + ev.time + ' · ' : ''}${categoryNames[ev.category] || ev.category}
         </div>
       </div>
       <span style="font-size: 1.2rem; color: var(--text-muted);">&rsaquo;</span>
@@ -81,7 +82,7 @@ function renderCalendar() {
   calendarDays.innerHTML = '';
 
   const firstDay = new Date(year, month, 1);
-  let startingDay = firstDay.getDay() - 1; // Montag = Index 0
+  let startingDay = firstDay.getDay() - 1; // Montag = 0
   if (startingDay === -1) startingDay = 6;
 
   const lastDay = new Date(year, month + 1, 0);
@@ -143,7 +144,7 @@ function renderCalendar() {
       dayCell.appendChild(dotsContainer);
     }
 
-    // Tag auswählen
+    // Klick auf Tag
     dayCell.addEventListener('click', () => {
       selectedDateString = dateString;
       document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected-day'));
@@ -195,7 +196,7 @@ function openCreateModal(defaultDate) {
   createModal.classList.add('active');
 }
 
-// Event-Listener
+// Navigation Event-Listener
 document.getElementById('btnPrev').addEventListener('click', () => {
   currentDate.setMonth(currentDate.getMonth() - 1);
   renderCalendar();
@@ -212,7 +213,7 @@ document.getElementById('btnToday').addEventListener('click', () => {
   renderCalendar();
 });
 
-// Filter-Checkboxen
+// Filter-Checkboxen Event-Listener
 document.querySelectorAll('.category-filter').forEach(label => {
   label.addEventListener('click', () => {
     const checkbox = label.querySelector('input');
@@ -254,5 +255,5 @@ document.getElementById('btnDeleteEvent').addEventListener('click', () => {
 
 document.getElementById('btnCloseDetail').addEventListener('click', closeDetailModal);
 
-// Start
+// Initialer Aufruf
 renderCalendar();
