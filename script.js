@@ -271,31 +271,3 @@ document.getElementById('btnCloseDetail').addEventListener('click', closeDetailM
 // Initialer Aufruf
 renderCalendar();
 
-// Vollbild (Fullscreen API) umschalten
-const btnFullscreen = document.getElementById('btnFullscreen');
-
-btnFullscreen.addEventListener('click', () => {
-  if (!document.fullscreenElement) {
-    // Vollbild anfordern
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen();
-    } else if (document.documentElement.webkitRequestFullscreen) { /* Safari */
-      document.documentElement.webkitRequestFullscreen();
-    } else if (document.documentElement.msRequestFullscreen) { /* IE/Edge */
-      document.documentElement.msRequestFullscreen();
-    }
-  } else {
-    // Vollbild verlassen
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    }
-  }
-});
-
-// Button-Symbol aktualisieren
-document.addEventListener('fullscreenchange', () => {
-  btnFullscreen.textContent = document.fullscreenElement ? '🗗' : '⛶';
-});
-
