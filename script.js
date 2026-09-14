@@ -4,11 +4,7 @@ let selectedDateString = new Date().toISOString().split('T')[0];
 let selectedEventId = null;
 
 // Standard-Beispieldaten mit den neuen Kategorien
-const initialEvents = [
-  { id: '1', title: 'Reitstunde Halle', date: new Date().toISOString().split('T')[0], time: '17:00', category: 'pferd', notes: 'Sattel mitbringen' },
-  { id: '2', title: 'Mathe-Vorlesung', date: new Date().toISOString().split('T')[0], time: '09:00', category: 'uni', notes: 'Hörsaal 3' },
-  { id: '3', title: 'Schicht Büro', date: new Date().toISOString().split('T')[0], time: '13:00', category: 'arbeit', notes: 'Projektmeeting' }
-];
+const initialEvents = [];
 
 let events = JSON.parse(localStorage.getItem('my_calendar_events')) || initialEvents;
 
