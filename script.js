@@ -1,13 +1,19 @@
+// 1. Supabase-Verbindung herstellen
+const SUPABASE_URL = "https://ntoibzgbrxcyftokdknw.supabase.co"; // 👈 Hier deine URL eintragen
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50b2liemdicnhjeWZ0b2tka253Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1OTQxOTksImV4cCI6MjEwNjE3MDE5OX0.p2P65dVsWiAp2gfjkZr_dUJZVH-IqgJo9hAGc8nkROw"; // 👈 Hier deinen Anon-Key eintragen
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // State-Management
 let currentDate = new Date();
 let selectedDateString = new Date().toISOString().split('T')[0];
 let selectedEventId = null;
-let isEditing = false;
+let isEditing = false; 
 
-// Standard-Beispieldaten mit den neuen Kategorien
-const initialEvents = [];
+// Aktuell angemeldeter Benutzer
+let currentUser = null;
 
-let events = JSON.parse(localStorage.getItem('my_calendar_events')) || initialEvents;
+// Die Termine starten jetzt als leeres Array und werden live aus der Cloud geladen
+let events = [];
 
 // Mapping der Schlüssel zu den Anzeige-Namen
 const categoryNames = {
@@ -28,6 +34,18 @@ const createEventForm = document.getElementById('createEventForm');
 const agendaList = document.getElementById('agendaList');
 const agendaDateTitle = document.getElementById('agendaDateTitle');
 
+// Auth DOM-Elemente
+const authContainer = document.getElementById('authContainer');
+const authForm = document.getElementById('authForm');
+const authEmail = document.getElementById('authEmail');
+const authPassword = document.getElementById('authPassword');
+const authTitle = document.getElementById('authTitle');
+const btnAuthSubmit = document.getElementById('btnAuthSubmit');
+const btnAuthToggle = document.getElementById('btnAuthToggle');
+const btnLogout = document.getElementById('btnLogout');
+
+let isSignUpMode = false; // Schalter für Anmelden vs. Registrieren
+
 // Aktive Kategorien ermitteln
 function getActiveCategories() {
   const active = [];
@@ -37,24 +55,136 @@ function getActiveCategories() {
   return active;
 }
 
+// 🔐 USER LOGIN / REGISTRIERUNG LOGIK
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+
+  btnAuthSubmit.disabled = true;
+  btnAuthSubmit.textContent = isSignUpMode ? "Registriere..." : "Melde an...";
+
+  try {
+    if (isSignUpMode) {
+      // REGISTRIEREN
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) throw error;
+      alert("Registrierung erfolgreich! Du wirst nun automatisch eingeloggt.");
+    } else {
+      // ANMELDEN
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    }
+  } catch (err) {
+    alert("Fehler: " + err.message);
+    btnAuthSubmit.disabled = false;
+    btnAuthSubmit.textContent = isSignUpMode ? "Registrieren" : "Einloggen";
+  }
+});
+
+// Umschalten zwischen Login und Registrierung
+btnAuthToggle.addEventListener('click', () => {
+  isSignUpMode = !isSignUpMode;
+  if (isSignUpMode) {
+    authTitle.textContent = "Konto erstellen";
+    btnAuthSubmit.textContent = "Registrieren";
+    btnAuthToggle.textContent = "Bereits ein Konto? Jetzt einloggen";
+  } else {
+    authTitle.textContent = "Anmelden";
+    btnAuthSubmit.textContent = "Einloggen";
+    btnAuthToggle.textContent = "Noch kein Konto? Jetzt registrieren";
+  }
+});
+
+// Abmelden (Logout)
+btnLogout.addEventListener('click', async () => {
+  const confirmLogout = confirm("Möchtest du dich wirklich abmelden?");
+  if (confirmLogout) {
+    await supabaseClient.auth.signOut();
+  }
+});
+
+// 🔄 AUTOMATISCHER LOGIN-CHECK (Dauerhaft angemeldet bleiben)
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    // Benutzer ist angemeldet!
+    currentUser = session.user;
+    authContainer.style.display = 'none'; // Login-Maske ausblenden
+    
+    // Daten live aus der Cloud laden (inklusive automatischem Umzug von lokalen Daten)
+    await loadEventsFromCloud();
+  } else {
+    // Benutzer ist abgemeldet!
+    currentUser = null;
+    events = [];
+    renderCalendar();
+    authContainer.style.display = 'flex'; // Login-Maske wieder einblenden
+    authEmail.value = '';
+    authPassword.value = '';
+    btnAuthSubmit.disabled = false;
+    btnAuthSubmit.textContent = isSignUpMode ? "Registrieren" : "Einloggen";
+  }
+});
+
+// Termine live aus der Supabase-Datenbank laden
+async function loadEventsFromCloud() {
+  if (!currentUser) return;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('events')
+      .select('*');
+
+    if (error) throw error;
+    events = data || [];
+
+    // 🚚 AUTOMATISCHER UMZUG: Altes Handy-Backup in dieses Benutzerkonto importieren
+    const localEvents = JSON.parse(localStorage.getItem('my_calendar_events'));
+    if (localEvents && localEvents.length > 0) {
+      console.log("Übertrage lokale Termine in deine Cloud...");
+      
+      for (const localEv of localEvents) {
+        const exists = events.some(cloudEv => cloudEv.id === localEv.id);
+        if (!exists) {
+          const newCloudEvent = {
+            ...localEv,
+            user_id: currentUser.id // Termin fest mit diesem Benutzer verknüpfen
+          };
+          
+          const { error: insertError } = await supabaseClient
+            .from('events')
+            .insert([newCloudEvent]);
+            
+          if (!insertError) {
+            events.push(newCloudEvent);
+          }
+        }
+      }
+      // Lokalen Speicher leeren, damit es nur einmal passiert
+      localStorage.removeItem('my_calendar_events');
+    }
+
+    renderCalendar();
+  } catch (err) {
+    console.error("Fehler beim Laden der Termine:", err.message);
+  }
+}
+
 // Tages-Agenda (Mobile) chronologisch sortiert rendern
 function renderAgenda() {
   const agendaSection = document.getElementById('agendaSection');
   const activeCategories = getActiveCategories();
   
-  // 1. Filtern und 2. Chronologisch nach Uhrzeit sortieren
   const dayEvents = events
     .filter(ev => ev.date === selectedDateString && activeCategories.includes(ev.category))
     .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
-  // Wenn keine Termine vorhanden sind -> Bereich komplett ausblenden
   if (dayEvents.length === 0) {
     agendaSection.style.display = 'none';
     agendaList.innerHTML = '';
     return;
   }
 
-  // Wenn Termine vorhanden sind -> Einblenden und auflisten
   agendaSection.style.display = 'block';
 
   const [y, m, d] = selectedDateString.split('-');
@@ -84,7 +214,7 @@ function renderAgenda() {
   });
 }
 
-// Kalender-Monatsraster rendern (ebenfalls sortiert)
+// Kalender-Monatsraster rendern
 function renderCalendar() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -102,7 +232,6 @@ function renderCalendar() {
   const totalDays = lastDay.getDate();
   const prevMonthLastDay = new Date(year, month, 0).getDate();
 
-  // Tage des Vormonats
   for (let i = startingDay; i > 0; i--) {
     const dayCell = document.createElement('div');
     dayCell.className = 'day-cell other-month';
@@ -113,11 +242,9 @@ function renderCalendar() {
   const activeCategories = getActiveCategories();
   const today = new Date();
 
-  // Tage des aktuellen Monats
   for (let day = 1; day <= totalDays; day++) {
     const dayCell = document.createElement('div');
     dayCell.className = 'day-cell';
-
     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
@@ -130,12 +257,10 @@ function renderCalendar() {
 
     dayCell.innerHTML = `<span class="day-number">${day}</span>`;
 
-    // Termine filtern und chronologisch sortieren
     const dayEvents = events
       .filter(ev => ev.date === dateString && activeCategories.includes(ev.category))
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
-    // Desktop: Text-Badges
     dayEvents.forEach(ev => {
       const badge = document.createElement('div');
       badge.className = `event-badge cat-${ev.category}`;
@@ -148,7 +273,6 @@ function renderCalendar() {
       dayCell.appendChild(badge);
     });
 
-    // Mobile: Farbpunkte (Dots)
     if (dayEvents.length > 0) {
       const dotsContainer = document.createElement('div');
       dotsContainer.className = 'event-dots-container';
@@ -160,7 +284,6 @@ function renderCalendar() {
       dayCell.appendChild(dotsContainer);
     }
 
-    // Klick auf Tag
     dayCell.addEventListener('click', () => {
       selectedDateString = dateString;
       document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected-day'));
@@ -171,7 +294,6 @@ function renderCalendar() {
     calendarDays.appendChild(dayCell);
   }
 
-  // Raster auffüllen
   const totalRendered = startingDay + totalDays;
   const remainingDays = 42 - totalRendered;
   if (remainingDays < 7) {
@@ -185,7 +307,6 @@ function renderCalendar() {
 
   renderAgenda();
 }
-
 
 // Modal-Logik
 function openDetailModal(id) {
@@ -204,7 +325,6 @@ function openDetailModal(id) {
 
 function closeDetailModal() {
   detailModal.classList.remove('active');
-  // 🔄 Nur löschen, wenn wir NICHT im Bearbeitungsmodus sind
   if (!isEditing) {
     selectedEventId = null;
   }
@@ -212,7 +332,7 @@ function closeDetailModal() {
 
 function openCreateModal(defaultDate) {
   isEditing = false;
-  document.querySelector('#createModal h3').textContent = "Neuen Termin anlegen"; // Überschrift zurücksetzen
+  document.querySelector('#createModal h3').textContent = "Neuen Termin anlegen";
   createEventForm.reset();
   document.getElementById('eventDate').value = defaultDate || selectedDateString || new Date().toISOString().split('T')[0];
   createModal.classList.add('active');
@@ -222,8 +342,7 @@ function openEditModal() {
   const ev = events.find(e => e.id === selectedEventId);
   if (!ev) return;
 
-  isEditing = true; // 👈 Das muss zuerst auf true gesetzt werden!
-  
+  isEditing = true;
   document.querySelector('#createModal h3').textContent = "Termin bearbeiten";
   
   document.getElementById('eventTitle').value = ev.title;
@@ -232,8 +351,7 @@ function openEditModal() {
   document.getElementById('eventCategory').value = ev.category;
   document.getElementById('eventNotes').value = ev.notes || '';
 
-  // Jetzt schließt diese Funktion das Detail-Modal, behält die ID aber im Speicher, weil isEditing bereits true ist!
-  closeDetailModal(); 
+  closeDetailModal();
   createModal.classList.add('active');
 }
 
@@ -254,13 +372,14 @@ document.getElementById('btnToday').addEventListener('click', () => {
   renderCalendar();
 });
 
-// Filter-Checkboxen Event-Listener
+// Filter-Checkboxen Event-Listener (Doppel-Klick-Sicher)
 document.querySelectorAll('.category-filter').forEach(label => {
-  label.addEventListener('click', () => {
+  label.addEventListener('click', (e) => {
+    if (e.target.tagName === 'LABEL') return;
+
     const checkbox = label.querySelector('input');
     label.classList.toggle('inactive', !checkbox.checked);
     
-    // Aktive Filter sammeln und im localStorage speichern
     const activeFilters = [];
     document.querySelectorAll('.filter-section input[type="checkbox"]').forEach(cb => {
       if (cb.checked) activeFilters.push(cb.value);
@@ -273,10 +392,15 @@ document.querySelectorAll('.category-filter').forEach(label => {
 
 // Erstellen & Löschen
 document.getElementById('btnOpenCreateModal').addEventListener('click', () => openCreateModal());
-document.getElementById('btnCancelCreate').addEventListener('click', () => createModal.classList.remove('active'));
+document.getElementById('btnCancelCreate').addEventListener('click', () => {
+  createModal.classList.remove('active');
+  isEditing = false;
+});
 
-createEventForm.addEventListener('submit', (e) => {
+// Formular absenden (In Supabase Cloud speichern/aktualisieren)
+createEventForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!currentUser) return;
 
   const title = document.getElementById('eventTitle').value.trim();
   const date = document.getElementById('eventDate').value;
@@ -284,64 +408,80 @@ createEventForm.addEventListener('submit', (e) => {
   const category = document.getElementById('eventCategory').value;
   const notes = document.getElementById('eventNotes').value.trim();
 
-  if (isEditing) {
-    // 🔄 Bestehenden Termin im Array suchen und mit neuen Werten überschreiben
-    events = events.map(ev => {
-      if (ev.id === selectedEventId) {
-        return { ...ev, title, date, time, category, notes };
-      }
-      return ev;
-    });
-    selectedDateString = date; // Fokus auf das (evtl. neue) Datum setzen
-  } else {
-    // ➕ Einen komplett neuen Termin erstellen
-    const newEvent = {
-      id: Date.now().toString(),
-      title,
-      date,
-      time,
-      category,
-      notes
-    };
-    events.push(newEvent);
-    selectedDateString = newEvent.date;
-  }
+  // Die user_id muss zwingend beim Erstellen und Aktualisieren mitgeschickt werden!
+  const eventData = { 
+    title, 
+    date, 
+    time, 
+    category, 
+    notes,
+    user_id: currentUser.id 
+  };
 
-  // Daten im Browser-Speicher sichern
-  localStorage.setItem('my_calendar_events', JSON.stringify(events));
-  
-  // Modal schließen, Status zurücksetzen und Kalender neu zeichnen
-  createModal.classList.remove('active');
-  isEditing = false;
-  renderCalendar();
+  try {
+    if (isEditing) {
+      // 🔄 In Supabase Cloud aktualisieren
+      const { error } = await supabaseClient
+        .from('events')
+        .update(eventData)
+        .eq('id', selectedEventId);
+
+      if (error) throw error;
+    } else {
+      // ➕ Neuen Termin in Supabase Cloud erstellen
+      const newEvent = {
+        id: Date.now().toString(),
+        ...eventData
+      };
+      
+      const { error } = await supabaseClient
+        .from('events')
+        .insert([newEvent]);
+
+      if (error) throw error;
+    }
+
+    createModal.classList.remove('active');
+    isEditing = false;
+    
+    // Daten live aus der Cloud neu laden, damit die Anzeige sofort stimmt
+    await loadEventsFromCloud();
+    
+  } catch (err) {
+    alert("Fehler beim Speichern in der Cloud: " + err.message);
+  }
 });
 
-document.getElementById('btnDeleteEvent').addEventListener('click', () => {
+// Termin aus Supabase Cloud löschen
+document.getElementById('btnDeleteEvent').addEventListener('click', async () => {
   if (!selectedEventId) return;
-  events = events.filter(e => e.id !== selectedEventId);
-  localStorage.setItem('my_calendar_events', JSON.stringify(events));
-  closeDetailModal();
-  renderCalendar();
+
+  try {
+    const { error } = await supabaseClient
+      .from('events')
+      .delete()
+      .eq('id', selectedEventId);
+
+    if (error) throw error;
+
+    closeDetailModal();
+    await loadEventsFromCloud();
+  } catch (err) {
+    alert("Fehler beim Löschen aus der Cloud: " + err.message);
+  }
 });
 
 document.getElementById('btnEditEvent').addEventListener('click', openEditModal);
-
 document.getElementById('btnCloseDetail').addEventListener('click', closeDetailModal);
 
+// Gespeicherte Filter beim Start laden
 const savedFilters = JSON.parse(localStorage.getItem('my_calendar_filters'));
 if (savedFilters) {
   document.querySelectorAll('.filter-section input[type="checkbox"]').forEach(cb => {
-    // Prüfen, ob diese Kategorie im Speicher als aktiv markiert war
     cb.checked = savedFilters.includes(cb.value);
-    
-    // Die visuelle Klasse "inactive" auf dem umgebenden Label anpassen
     const label = cb.closest('.category-filter');
     if (label) {
       label.classList.toggle('inactive', !cb.checked);
     }
   });
 }
-
-// Initialer Aufruf
-renderCalendar();
-
