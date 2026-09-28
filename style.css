@@ -405,3 +405,22 @@ body {
   }
 }
 
+.btn-icon {
+  background: none;
+  background-color: #968d8d;
+  border: none;
+  font-size: 1.4rem;
+  /* ÄNDERN: Von 'var(--text-muted)' zu einer roten Farbe */
+  cursor: pointer;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  line-height: 1;
+}
+
+.btn-icon:hover {
+  background: var(--bg-hover);
+}
+

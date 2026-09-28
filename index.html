@@ -12,18 +12,45 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#ffffff">
+  <!-- Supabase-Bibliothek laden -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+  <!-- ➕ NEU: Vollbild Login-/Registrierungs-Maske -->
+  <div id="authContainer" class="modal-backdrop active" style="background: var(--bg-color); z-index: 999; display: flex; align-items: center; justify-content: center;">
+    <div class="modal" style="box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+      <div class="modal-header">
+        <h3 id="authTitle">Anmelden</h3>
+      </div>
+      <form id="authForm">
+        <div class="form-group">
+          <label for="authEmail">E-Mail-Adresse</label>
+          <input type="email" id="authEmail" required placeholder="name@beispiel.de">
+        </div>
+        <div class="form-group">
+          <label for="authPassword">Passwort</label>
+          <input type="password" id="authPassword" required placeholder="Mindestens 6 Zeichen">
+        </div>
+        <div class="modal-actions" style="flex-direction: column; gap: 10px; align-items: stretch; margin-top: 20px;">
+          <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="width: 100%;">Einloggen</button>
+          <button type="button" class="btn" id="btnAuthToggle" style="width: 100%; border: none; background: transparent; color: var(--primary); font-size: 0.85rem;">Noch kein Konto? Jetzt registrieren</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div class="calendar-container">
     <!-- Header -->
     <div class="calendar-header">
       <h2 id="currentMonthYear">Monat Jahr</h2>
       <div class="nav-buttons">
-        <button class="btn" id="btnPrev">&lt; Zurück</button>
+        <button class="btn" id="btnPrev">&lt;</button>
         <button class="btn" id="btnToday">Heute</button>
-        <button class="btn" id="btnNext">Weiter &gt;</button>
+        <button class="btn" id="btnNext">&gt;</button>
         <button class="btn btn-primary" id="btnOpenCreateModal">+ Neu</button>
+        <!-- ➕ NEU: Logout Button -->
+        <button class="btn btn-icon" id="btnLogout" title="Abmelden">🚪</button>
       </div>
     </div>
 
