@@ -12,6 +12,8 @@
   --cat-tage: #d53f8c;    /* Pink / Beere */
   --cat-uni: #dd6b20;     /* Orange */
   --cat-arbeit: #3182ce;  /* Blau */
+  --cat-freizeit: #9b59b6;     /* Lila */
+  --cat-dobby: #2ecc71;   /* Hellgrün */
 }
 
 * {
@@ -117,6 +119,8 @@ body {
 .category-filter.cat-tage { background: #fff5f7; color: var(--cat-tage); border-color: var(--cat-tage); }
 .category-filter.cat-uni { background: #feebc8; color: var(--cat-uni); border-color: var(--cat-uni); }
 .category-filter.cat-arbeit { background: #ebf8ff; color: var(--cat-arbeit); border-color: var(--cat-arbeit); }
+.category-filter.cat-freizeit { background: #f5eef8; color: var(--cat-freizeit); border-color: var(--cat-freizeit); }
+.category-filter.cat-dobby { background: #e8f8f5; color: var(--cat-dobby); border-color: var(--cat-dobby); }
 
 .category-filter.inactive {
   opacity: 0.35;
@@ -217,6 +221,8 @@ body {
 .bg-cat-tage, .event-badge.cat-tage { background-color: var(--cat-tage); }
 .bg-cat-uni, .event-badge.cat-uni { background-color: var(--cat-uni); }
 .bg-cat-arbeit, .event-badge.cat-arbeit { background-color: var(--cat-arbeit); }
+.bg-cat-freizeit, .event-badge.cat-freizeit { background-color: var(--cat-freizeit); }
+.bg-cat-dobby, .event-badge.cat-dobby { background-color: var(--cat-dobby); }
 
 /* Mobile Tages-Agenda */
 .day-agenda-section {
@@ -257,6 +263,8 @@ body {
 .agenda-item.cat-tage { border-left-color: var(--cat-tage); }
 .agenda-item.cat-uni { border-left-color: var(--cat-uni); }
 .agenda-item.cat-arbeit { border-left-color: var(--cat-arbeit); }
+.agenda-item.cat-freizeit { border-left-color: var(--cat-freizeit); }
+.agenda-item.cat-dobby { border-left-color: var(--cat-dobby); }
 
 .agenda-empty {
   color: var(--text-muted);

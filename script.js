@@ -2,6 +2,7 @@
 let currentDate = new Date();
 let selectedDateString = new Date().toISOString().split('T')[0];
 let selectedEventId = null;
+let isEditing = false;
 
 // Standard-Beispieldaten mit den neuen Kategorien
 const initialEvents = [];
@@ -13,7 +14,9 @@ const categoryNames = {
   pferd: '🐎 Pferd',
   tage: '👸 Tage',
   uni: '🏫 Uni',
-  arbeit: '💼 Arbeit'
+  arbeit: '💼 Arbeit',
+  freizeit: '🎨 Freizeit',
+  dobby: '🐶 Dobby'
 };
 
 // DOM-Elemente
@@ -201,12 +204,36 @@ function openDetailModal(id) {
 
 function closeDetailModal() {
   detailModal.classList.remove('active');
-  selectedEventId = null;
+  // 🔄 Nur löschen, wenn wir NICHT im Bearbeitungsmodus sind
+  if (!isEditing) {
+    selectedEventId = null;
+  }
 }
 
 function openCreateModal(defaultDate) {
+  isEditing = false;
+  document.querySelector('#createModal h3').textContent = "Neuen Termin anlegen"; // Überschrift zurücksetzen
   createEventForm.reset();
   document.getElementById('eventDate').value = defaultDate || selectedDateString || new Date().toISOString().split('T')[0];
+  createModal.classList.add('active');
+}
+
+function openEditModal() {
+  const ev = events.find(e => e.id === selectedEventId);
+  if (!ev) return;
+
+  isEditing = true; // 👈 Das muss zuerst auf true gesetzt werden!
+  
+  document.querySelector('#createModal h3').textContent = "Termin bearbeiten";
+  
+  document.getElementById('eventTitle').value = ev.title;
+  document.getElementById('eventDate').value = ev.date;
+  document.getElementById('eventTime').value = ev.time || '';
+  document.getElementById('eventCategory').value = ev.category;
+  document.getElementById('eventNotes').value = ev.notes || '';
+
+  // Jetzt schließt diese Funktion das Detail-Modal, behält die ID aber im Speicher, weil isEditing bereits true ist!
+  closeDetailModal(); 
   createModal.classList.add('active');
 }
 
@@ -232,6 +259,14 @@ document.querySelectorAll('.category-filter').forEach(label => {
   label.addEventListener('click', () => {
     const checkbox = label.querySelector('input');
     label.classList.toggle('inactive', !checkbox.checked);
+    
+    // Aktive Filter sammeln und im localStorage speichern
+    const activeFilters = [];
+    document.querySelectorAll('.filter-section input[type="checkbox"]').forEach(cb => {
+      if (cb.checked) activeFilters.push(cb.value);
+    });
+    localStorage.setItem('my_calendar_filters', JSON.stringify(activeFilters));
+    
     renderCalendar();
   });
 });
@@ -242,19 +277,42 @@ document.getElementById('btnCancelCreate').addEventListener('click', () => creat
 
 createEventForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const newEvent = {
-    id: Date.now().toString(),
-    title: document.getElementById('eventTitle').value.trim(),
-    date: document.getElementById('eventDate').value,
-    time: document.getElementById('eventTime').value,
-    category: document.getElementById('eventCategory').value,
-    notes: document.getElementById('eventNotes').value.trim()
-  };
 
-  events.push(newEvent);
+  const title = document.getElementById('eventTitle').value.trim();
+  const date = document.getElementById('eventDate').value;
+  const time = document.getElementById('eventTime').value;
+  const category = document.getElementById('eventCategory').value;
+  const notes = document.getElementById('eventNotes').value.trim();
+
+  if (isEditing) {
+    // 🔄 Bestehenden Termin im Array suchen und mit neuen Werten überschreiben
+    events = events.map(ev => {
+      if (ev.id === selectedEventId) {
+        return { ...ev, title, date, time, category, notes };
+      }
+      return ev;
+    });
+    selectedDateString = date; // Fokus auf das (evtl. neue) Datum setzen
+  } else {
+    // ➕ Einen komplett neuen Termin erstellen
+    const newEvent = {
+      id: Date.now().toString(),
+      title,
+      date,
+      time,
+      category,
+      notes
+    };
+    events.push(newEvent);
+    selectedDateString = newEvent.date;
+  }
+
+  // Daten im Browser-Speicher sichern
   localStorage.setItem('my_calendar_events', JSON.stringify(events));
-  selectedDateString = newEvent.date;
+  
+  // Modal schließen, Status zurücksetzen und Kalender neu zeichnen
   createModal.classList.remove('active');
+  isEditing = false;
   renderCalendar();
 });
 
@@ -266,7 +324,23 @@ document.getElementById('btnDeleteEvent').addEventListener('click', () => {
   renderCalendar();
 });
 
+document.getElementById('btnEditEvent').addEventListener('click', openEditModal);
+
 document.getElementById('btnCloseDetail').addEventListener('click', closeDetailModal);
+
+const savedFilters = JSON.parse(localStorage.getItem('my_calendar_filters'));
+if (savedFilters) {
+  document.querySelectorAll('.filter-section input[type="checkbox"]').forEach(cb => {
+    // Prüfen, ob diese Kategorie im Speicher als aktiv markiert war
+    cb.checked = savedFilters.includes(cb.value);
+    
+    // Die visuelle Klasse "inactive" auf dem umgebenden Label anpassen
+    const label = cb.closest('.category-filter');
+    if (label) {
+      label.classList.toggle('inactive', !cb.checked);
+    }
+  });
+}
 
 // Initialer Aufruf
 renderCalendar();

@@ -41,6 +41,12 @@
       <label class="category-filter cat-arbeit" data-cat="arbeit">
         <input type="checkbox" checked value="arbeit"> 💼 Arbeit
       </label>
+      <label class="category-filter cat-freizeit" data-cat="freizeit">
+        <input type="checkbox" checked value="freizeit"> 🎨 Freizeit
+      </label>
+      <label class="category-filter cat-dobby" data-cat="dobby">
+        <input type="checkbox" checked value="dobby"> 🐶 Dobby
+      </label>
     </div>
 
     <!-- Wochentage -->
@@ -86,6 +92,8 @@
             <option value="tage">👸 Tage</option>
             <option value="uni">🏫 Uni</option>
             <option value="arbeit">💼 Arbeit</option>
+            <option value="freizeit">🎨 Freizeit</option>
+            <option value="dobby">🐶 Dobby</option>
           </select>
         </div>
         <div class="form-group">
@@ -113,6 +121,7 @@
         <p><strong>Notiz:</strong> <span id="detailNotes"></span></p>
       </div>
       <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="btnEditEvent" style="background-color: #3182ce; border-color: #3182ce;">Bearbeiten</button>
         <button type="button" class="btn btn-danger" id="btnDeleteEvent">Löschen</button>
         <button type="button" class="btn" id="btnCloseDetail">Schließen</button>
       </div>
